@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ClassDetect AI - Dataset COCO 2017
+/datasets/coco2017/images/
+/datasets/coco2017/annotations/
+
+# Arquivos gerados pelo YOLO
+/runs/
+*.pt
+
