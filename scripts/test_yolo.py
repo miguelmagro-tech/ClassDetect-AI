@@ -21,9 +21,8 @@ CLASS_IDS = [0, 24, 39, 41, 56, 63, 64, 66, 67, 73]
 with MANIFEST.open("r", encoding="utf-8") as file:
     manifest = json.load(file)
 
-# Escolher a primeira imagem do dataset
 
-# Selecionar uma imagem anotada com a classe "bottle" (ID 39) para o teste
+
 
 # Permitir escolher a classe pelo terminal
 parser = argparse.ArgumentParser()
@@ -67,7 +66,7 @@ print("Executando deteccao de objetos...")
 
 results = model.predict(
     source=str(image_path),
-    classes=CLASS_IDS,  # Filtrar apenas a classe "bottle"
+    classes=CLASS_IDS,  
     conf=0.25,
     device="cpu",
     verbose=False
