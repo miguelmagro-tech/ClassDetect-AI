@@ -1,7 +1,10 @@
+
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from PIL import Image, UnidentifiedImageError
 
 from app.services.detector import detect_objects
+
+
 
 #criar a aplicação do FastAPI
 app = FastAPI(
@@ -22,11 +25,12 @@ def home():
             
             }
 
+
 # Endpoint para receber uma imagem e detectar objetos
 @app.post("/detect")
 def detect(file: UploadFile = File(...)):
 
-    # Verificar se o arquivo enviado é uma imagem
+    # Verificar se o arquivo enviado e uma imagem
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=400,
@@ -44,5 +48,5 @@ def detect(file: UploadFile = File(...)):
             detail="Imagem invalida ou corrompida."
         )
 
-    # Executar o detector e devolver a resposta
+    # Executar o YOLO11n e devolver o resultado
     return detect_objects(image_rgb)
