@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from PIL import Image, UnidentifiedImageError
 
+from app.services.detector import detect_objects
 
 #criar a aplicação do FastAPI
 app = FastAPI(
@@ -19,3 +21,28 @@ def home():
         "status": "API está funcionando corretamente."
             
             }
+
+# Endpoint para receber uma imagem e detectar objetos
+@app.post("/detect")
+def detect(file: UploadFile = File(...)):
+
+    # Verificar se o arquivo enviado é uma imagem
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="O arquivo enviado deve ser uma imagem."
+        )
+
+    # Abrir e converter a imagem para RGB
+    try:
+        with Image.open(file.file) as image:
+            image_rgb = image.convert("RGB")
+
+    except (UnidentifiedImageError, OSError):
+        raise HTTPException(
+            status_code=400,
+            detail="Imagem invalida ou corrompida."
+        )
+
+    # Executar o detector e devolver a resposta
+    return detect_objects(image_rgb)
