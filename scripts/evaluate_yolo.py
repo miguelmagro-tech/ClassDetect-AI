@@ -52,6 +52,49 @@ def calculate_iou(box_a, box_b):
     return intersection / union if union > 0 else 0.0
 
 
+def empty_counts():
+    return {"tp": 0, "fp": 0, "fn": 0}
+
+
+def match_detections(predictions, ground_truth, iou_threshold=0.50):
+    """Conta correspondencias por classe, usando cada anotacao no maximo uma vez."""
+    counts = defaultdict(empty_counts)
+    unmatched = set(range(len(ground_truth)))
+
+    for prediction in predictions:
+        name = prediction["class_name"]
+        best_iou, best_match = 0.0, None
+        for index in unmatched:
+            gt = ground_truth[index]
+            if gt["class_name"] != name:
+                continue
+            iou = calculate_iou(prediction["bbox"], gt["bbox"])
+            if iou > best_iou:
+                best_iou, best_match = iou, index
+        if best_match is not None and best_iou >= iou_threshold:
+            counts[name]["tp"] += 1
+            unmatched.remove(best_match)
+        else:
+            counts[name]["fp"] += 1
+
+    for index in unmatched:
+        counts[ground_truth[index]["class_name"]]["fn"] += 1
+    return dict(counts)
+
+
+def summarize_classes(counts):
+    """Retorna contagens e metricas; None significa denominador zero."""
+    summary = {}
+    for name, values in sorted(counts.items()):
+        tp, fp, fn = values["tp"], values["fp"], values["fn"]
+        summary[name] = {
+            **values,
+            "precision": round(tp / (tp + fp), 4) if tp + fp else None,
+            "recall": round(tp / (tp + fn), 4) if tp + fn else None,
+        }
+    return summary
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=10)
@@ -114,6 +157,7 @@ def main():
     total_tp = 0
     total_fp = 0
     total_fn = 0
+    class_counts = {name: empty_counts() for name in TARGET_CLASSES}
 
     for index, image in enumerate(images, start=1):
         image_path = IMAGES_DIR / image["file_name"]
@@ -131,41 +175,18 @@ def main():
         )
 
         ground_truth = annotations_by_image[image["id"]]
-        unmatched = set(range(len(ground_truth)))
-
-        tp = 0
-        fp = 0
-
-        # Comparar cada deteccao com a anotacao real
-        for box in results[0].boxes:
-            class_name = model.names[int(box.cls.item())]
-            predicted_bbox = box.xyxy[0].tolist()
-
-            best_iou = 0.0
-            best_match = None
-
-            for gt_index in unmatched:
-                gt = ground_truth[gt_index]
-
-                if gt["class_name"] != class_name:
-                    continue
-
-                iou = calculate_iou(
-                    predicted_bbox,
-                    gt["bbox"]
-                )
-
-                if iou > best_iou:
-                    best_iou = iou
-                    best_match = gt_index
-
-            if best_match is not None and best_iou >= 0.50:
-                tp += 1
-                unmatched.remove(best_match)
-            else:
-                fp += 1
-
-        fn = len(unmatched)
+        predictions = [
+            {"class_name": model.names[int(box.cls.item())],
+             "bbox": box.xyxy[0].tolist()}
+            for box in results[0].boxes
+        ]
+        image_counts = match_detections(predictions, ground_truth)
+        for name, values in image_counts.items():
+            for key in ("tp", "fp", "fn"):
+                class_counts[name][key] += values[key]
+        tp = sum(values["tp"] for values in image_counts.values())
+        fp = sum(values["fp"] for values in image_counts.values())
+        fn = sum(values["fn"] for values in image_counts.values())
 
         total_tp += tp
         total_fp += fp
@@ -197,6 +218,7 @@ def main():
         "precision": round(precision, 4),
         "recall": round(recall, 4),
         "image_size": 960,
+        "per_class": summarize_classes(class_counts),
     }
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
