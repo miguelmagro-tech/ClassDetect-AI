@@ -57,6 +57,8 @@ O modelo trabalha com as seguintes 10 classes:
 
 O projeto utiliza pesos pré-treinados do YOLO11n, sem realizar treinamento próprio do modelo.
 
+Foi escolhida a variante `n` (nano) para viabilizar experimentos e inferência em CPU com um modelo compacto. Esta escolha não resulta de um benchmark entre arquiteturas; o desempenho em cada classe precisa ser verificado separadamente.
+
 ## 4. Tecnologias utilizadas
 
 | Tecnologia | Finalidade |
@@ -154,6 +156,8 @@ Registra as dependências Python necessárias para executar o projeto.
 
 O desenvolvimento foi organizado com metodologia Kanban utilizando o Trello.
 
+O link público do quadro deve ser acrescentado antes da entrega e enviado no AVA.
+
 O versionamento utiliza Git e GitHub, com branches de desenvolvimento e Pull Requests para integração do código.
 
 As principais branches são:
@@ -161,7 +165,6 @@ As principais branches são:
 - `main`: versão principal do projeto.
 - `develop`: integração das funcionalidades desenvolvidas.
 - `feature/*`: desenvolvimento de funcionalidades e melhorias específicas.
-```
 
 ## 8. Instalação do projeto
 
@@ -271,6 +274,37 @@ Os dados são mantidos localmente na pasta `datasets/coco2017/`.
 
 O funcionamento básico do endpoint `/detect` não exige que o usuário tenha o dataset COCO instalado, pois o sistema utiliza o modelo YOLO11n pré-treinado para processar imagens enviadas à API.
 
+### 10.1. Reproduzindo a validação do dataset e do modelo
+
+O manifesto versionado `datasets/coco2017/selected_images.json` identifica as 173 imagens usadas no experimento. Para preparar os arquivos, instale primeiro as dependências conforme a seção 8. Os comandos abaixo são para PowerShell, na raiz do projeto:
+
+1. Crie a pasta e obtenha as anotações COCO `val2017` (aproximadamente 20 MB):
+
+```powershell
+New-Item -ItemType Directory -Force datasets/coco2017/annotations | Out-Null
+curl.exe --fail --location --output datasets/coco2017/annotations/instances_val2017.json https://huggingface.co/datasets/merve/coco/resolve/main/annotations/instances_val2017.json
+Get-FileHash datasets/coco2017/annotations/instances_val2017.json -Algorithm SHA256
+```
+
+O SHA-256 esperado é `e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f`. Se for diferente, não use o arquivo e refaça o download. A fonte é uma cópia das anotações COCO publicada no Hugging Face; consulte também o [site do COCO](https://cocodataset.org/#download) e as condições de uso das imagens.
+
+2. Baixe as 173 imagens do manifesto e confira se o resumo informa zero falhas:
+
+```powershell
+python scripts/download_images.py --limit 173
+```
+
+Se houver falhas, repita o comando: imagens já baixadas e válidas serão reaproveitadas. A disponibilidade das fontes externas e a conexão de internet são necessárias.
+
+3. Confira os arquivos e execute a avaliação. Ela pode demorar em CPU:
+
+```powershell
+python scripts/validate_dataset.py
+python scripts/evaluate_yolo.py --limit 173
+```
+
+O resultado é salvo em `runs/evaluation/summary.json`, pasta ignorada pelo Git. O script de seleção original não está disponível: o manifesto versionado é a referência das imagens efetivamente usadas e não reconstrói o processo de seleção.
+
 
 ## 11. Exemplo de resposta da API
 
@@ -344,11 +378,12 @@ Os testes estão implementados no arquivo:
 | Arquivo inválido | Rejeição de arquivo de texto | 400 |
 | Arquivo ausente | Validação de campo obrigatório | 422 |
 | Imagem corrompida | Tratamento de imagem inválida | 400 |
-| YOLO11n real | Integração da API com o modelo | 200 |
+| YOLO11n real com imagem gerada | Integração da API com o modelo sem o dataset local | 200 |
+| YOLO11n real com imagem COCO | Detecção de laptop na imagem de referência, quando disponível | 200 |
 
 O primeiro teste utiliza um mock para simular a resposta do detector, permitindo validar o endpoint de forma isolada.
 
-O último teste utiliza o modelo YOLO11n real com uma imagem do subconjunto COCO disponível localmente.
+Os dois últimos testes utilizam o modelo YOLO11n real. O primeiro gera uma imagem branca em memória e verifica a integração, sem exigir o dataset; ele não comprova a qualidade das detecções. O segundo utiliza uma imagem do subconjunto COCO disponível localmente.
 
 ### Executando os testes
 
@@ -358,9 +393,7 @@ Com o ambiente virtual ativado, execute na raiz do projeto:
 python -m pytest tests/test_api.py -v
 ```
 
-Durante o desenvolvimento, os cinco testes foram executados com sucesso.
-
-**Observação:** o teste com YOLO11n real utiliza a imagem `000000001675.jpg`, armazenada localmente no dataset. Caso essa imagem não esteja disponível, o Pytest marca esse teste como `SKIPPED` (ignorado).
+**Observação:** o teste com a imagem COCO utiliza `000000001675.jpg`. Caso essa imagem não esteja disponível, o Pytest marca somente esse teste como `SKIPPED` (ignorado). Os testes com o modelo real exigem os pesos `yolo11n.pt`; na primeira execução, o Ultralytics poderá baixá-los pela internet.
 
 ## 13. Validação do modelo
 
@@ -397,6 +430,8 @@ Os resultados demonstram a capacidade do YOLO11n de detectar objetos relacionado
 A avaliação foi realizada por meio de um procedimento simplificado de correspondência entre detecções e anotações, considerando classe e IoU mínimo de 0,50, sem considerar anotações do tipo `iscrowd`.
 
 Portanto, esses resultados representam as métricas calculadas pelo projeto e não devem ser confundidos com o mAP oficial do benchmark COCO.
+
+São métricas agregadas: elas não demonstram o desempenho de cada classe. Os parâmetros foram escolhidos após experimentos de validação, então é necessário um conjunto independente para estimar a generalização. Como anotações `iscrowd` são descartadas, previsões sobre esses objetos podem ser contadas como falsos positivos.
 
 ## 14. Limitações e possibilidades de melhoria
 

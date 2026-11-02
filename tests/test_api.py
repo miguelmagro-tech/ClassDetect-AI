@@ -130,7 +130,22 @@ def test_detect_corrupted_image():
 
 
     
-def test_detect_real_yolo():
+def test_detect_real_yolo_with_generated_image():
+    # Exerce a API e o modelo real sem depender do dataset local.
+    image = Image.new("RGB", (100, 100), color="white")
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+
+    response = client.post(
+        "/detect",
+        files={"file": ("generated.png", buffer.getvalue(), "image/png")},
+    )
+
+    assert response.status_code == 200
+    assert isinstance(response.json()["detections"], list)
+
+
+def test_detect_real_yolo_on_coco_sample():
     from pathlib import Path
     import pytest
 
