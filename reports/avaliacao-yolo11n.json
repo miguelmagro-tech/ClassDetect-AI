@@ -1,0 +1,94 @@
+{
+  "images_evaluated": 173,
+  "confidence_threshold": 0.2,
+  "iou_threshold": 0.5,
+  "true_positives": 783,
+  "false_positives": 415,
+  "false_negatives": 576,
+  "precision": 0.6536,
+  "recall": 0.5762,
+  "image_size": 960,
+  "per_class": {
+    "backpack": {
+      "tp": 22,
+      "fp": 15,
+      "fn": 46,
+      "precision": 0.5946,
+      "recall": 0.3235
+    },
+    "book": {
+      "tp": 49,
+      "fp": 41,
+      "fn": 180,
+      "precision": 0.5444,
+      "recall": 0.214
+    },
+    "bottle": {
+      "tp": 50,
+      "fp": 20,
+      "fn": 53,
+      "precision": 0.7143,
+      "recall": 0.4854
+    },
+    "cell phone": {
+      "tp": 27,
+      "fp": 21,
+      "fn": 32,
+      "precision": 0.5625,
+      "recall": 0.4576
+    },
+    "chair": {
+      "tp": 66,
+      "fp": 73,
+      "fn": 58,
+      "precision": 0.4748,
+      "recall": 0.5323
+    },
+    "cup": {
+      "tp": 40,
+      "fp": 25,
+      "fn": 47,
+      "precision": 0.6154,
+      "recall": 0.4598
+    },
+    "keyboard": {
+      "tp": 54,
+      "fp": 32,
+      "fn": 27,
+      "precision": 0.6279,
+      "recall": 0.6667
+    },
+    "laptop": {
+      "tp": 55,
+      "fp": 25,
+      "fn": 18,
+      "precision": 0.6875,
+      "recall": 0.7534
+    },
+    "mouse": {
+      "tp": 46,
+      "fp": 19,
+      "fn": 15,
+      "precision": 0.7077,
+      "recall": 0.7541
+    },
+    "person": {
+      "tp": 374,
+      "fp": 144,
+      "fn": 100,
+      "precision": 0.722,
+      "recall": 0.789
+    }
+  },
+  "provenance": {
+    "date": "2026-11-02",
+    "dataset": "COCO 2017 val2017, subconjunto selecionado de 173 imagens",
+    "manifest_sha256": "b42226c1d492f701a95d3822506e5970f545dfc17f2bcc720b05a81db16a0ec7",
+    "annotations_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+    "weights_file": "yolo11n.pt",
+    "weights_sha256": "0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1",
+    "device": "cpu",
+    "matching": "classe e IoU >= 0.50; anotacoes iscrowd descartadas",
+    "limitations": "Conjunto usado para escolha de parametros; nao e avaliacao independente nem mAP oficial."
+  }
+}

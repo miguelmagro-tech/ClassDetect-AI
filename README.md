@@ -156,7 +156,7 @@ Registra as dependências Python necessárias para executar o projeto.
 
 O desenvolvimento foi organizado com metodologia Kanban utilizando o Trello.
 
-O link público do quadro deve ser acrescentado antes da entrega e enviado no AVA.
+O quadro público está disponível em [ClassDetect AI — Projeto Final SC-TEC](https://trello.com/b/4VCRxL3h/classdetect-ai-projeto-final-sc-tec). O link também deve ser enviado no AVA.
 
 O versionamento utiliza Git e GitHub, com branches de desenvolvimento e Pull Requests para integração do código.
 
@@ -303,7 +303,13 @@ python scripts/validate_dataset.py
 python scripts/evaluate_yolo.py --limit 173
 ```
 
-O resultado é salvo em `runs/evaluation/summary.json`, pasta ignorada pelo Git. O script de seleção original não está disponível: o manifesto versionado é a referência das imagens efetivamente usadas e não reconstrói o processo de seleção.
+O resultado é salvo em `runs/evaluation/summary.json`, pasta ignorada pelo Git. Para reproduzir a seleção sem alterar o manifesto versionado, execute:
+
+```powershell
+python scripts/select_subset.py
+```
+
+O seletor recuperado do histórico grava a prévia em `runs/dataset_preview/selected_images.json`. Com as anotações identificadas acima, a prévia reproduziu exatamente o manifesto de 173 imagens. O arquivo versionado permanece intacto.
 
 
 ## 11. Exemplo de resposta da API
@@ -419,6 +425,23 @@ A avaliação utilizou as seguintes configurações:
 | Falsos positivos (FP) | 415 |
 | Falsos negativos (FN) | 576 |
 
+### Resultados por classe
+
+Os resultados abaixo foram obtidos na mesma execução de 173 imagens. TP, FP e FN representam as contagens por classe; precisão e revocação são calculadas com essas contagens. O [relatório JSON](reports/avaliacao-yolo11n.json) registra o resultado e as identificações dos arquivos usados.
+
+| Classe | TP | FP | FN | Precisão | Revocação |
+|--------|---:|---:|---:|---------:|----------:|
+| backpack | 22 | 15 | 46 | 59,46% | 32,35% |
+| book | 49 | 41 | 180 | 54,44% | 21,40% |
+| bottle | 50 | 20 | 53 | 71,43% | 48,54% |
+| cell phone | 27 | 21 | 32 | 56,25% | 45,76% |
+| chair | 66 | 73 | 58 | 47,48% | 53,23% |
+| cup | 40 | 25 | 47 | 61,54% | 45,98% |
+| keyboard | 54 | 32 | 27 | 62,79% | 66,67% |
+| laptop | 55 | 25 | 18 | 68,75% | 75,34% |
+| mouse | 46 | 19 | 15 | 70,77% | 75,41% |
+| person | 374 | 144 | 100 | 72,20% | 78,90% |
+
 ### Interpretação
 
 A precisão representa a proporção das detecções realizadas pelo modelo que corresponderam corretamente às anotações de referência.
@@ -431,7 +454,7 @@ A avaliação foi realizada por meio de um procedimento simplificado de correspo
 
 Portanto, esses resultados representam as métricas calculadas pelo projeto e não devem ser confundidos com o mAP oficial do benchmark COCO.
 
-São métricas agregadas: elas não demonstram o desempenho de cada classe. Os parâmetros foram escolhidos após experimentos de validação, então é necessário um conjunto independente para estimar a generalização. Como anotações `iscrowd` são descartadas, previsões sobre esses objetos podem ser contadas como falsos positivos.
+Os parâmetros foram escolhidos após experimentos neste conjunto de validação, então é necessário um conjunto independente para estimar a generalização. Como anotações `iscrowd` são descartadas, previsões sobre esses objetos podem ser contadas como falsos positivos. Os totais agregados também são influenciados pelo número desigual de objetos em cada classe.
 
 ## 14. Limitações e possibilidades de melhoria
 
